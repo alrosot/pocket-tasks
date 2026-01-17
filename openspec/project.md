@@ -11,6 +11,7 @@ Through simple and engaging interactions, the kids will be able to check what we
 - PIL/Pillow Library
 - Python
 - plain file system storage to save each kid's weekly progress
+- Amazon SES
 
 ## Project Conventions
 
@@ -24,14 +25,11 @@ We'll have a cronjob running on the raspberryPi that every night, at 2am, does t
 - Gets the latest source code from github
 - Starts pocket-tasks
 
+### Visual Identity
+Even though our selected display only supports two colours (black and white) and 250×122 resolution, the interface should be joyful. Consider having:
+- round buttons
+- pixel art
+- minimal transition elements due to the low refresh speed
+
 ### Git Workflow
-[Describe your branching strategy and commit conventions]
-
-## Domain Context
-[Add domain-specific knowledge that AI assistants need to understand]
-
-## Important Constraints
-[List any technical, business, or regulatory constraints]
-
-## External Dependencies
-[Document key external services, APIs, or systems]
+- PRs can only be merged once all the unit tests are passing
