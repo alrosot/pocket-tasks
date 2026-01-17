@@ -1,0 +1,15 @@
+# Core dependencies for pocket-tasks
+
+# Image rendering and manipulation
+Pillow==12.1.0
+
+# Display abstraction for e-paper and emulator
+luma.core==2.5.3
+luma.emulator==1.5.0
+
+# E-paper HAT driver (Waveshare 2.13" Touch)
+# Note: May need to use the repository version on RaspberryPi
+# waveshare-epd==4.0.0
+
+# Amazon SES for email notifications
+boto3==1.42.30

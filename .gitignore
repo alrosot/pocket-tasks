@@ -1,0 +1,4 @@
+# Code coverage output
+.coverage
+htmlcov/
+.pytest_cache/
