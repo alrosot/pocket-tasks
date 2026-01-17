@@ -1,0 +1,34 @@
+# Spec: Home Screen
+
+This spec defines the requirements for the initial home screen of the Pocket Tasks application.
+
+## ADDED Requirements
+
+### Requirement: home-screen-layout
+
+The application MUST display a home screen that is divided into two equally-sized vertical sections.
+
+#### Scenario: Application Start
+
+- Given the application is started.
+- When the home screen is displayed.
+- Then the screen MUST be divided into two vertical sections of equal size.
+
+### Requirement: home-screen-placeholders
+
+Each section of the home screen MUST display a placeholder for a child's dashboard.
+
+#### Scenario: Home Screen Display
+
+- Given the home screen is displayed.
+- Then each of the two sections MUST contain a placeholder UI element representing a child's dashboard.
+
+### Requirement: home-screen-clickable-sections
+
+Each child's dashboard section MUST be clickable.
+
+#### Scenario: User Interaction
+
+- Given the home screen is displayed.
+- When the user clicks on a child's dashboard section.
+- Then the application SHOULD register the click event (the actual navigation is out of scope).

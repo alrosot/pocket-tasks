@@ -1,0 +1,4 @@
+- [x] Create the basic UI layout for the home screen, dividing the screen into two vertical halves.
+- [x] Implement a placeholder UI for each child's dashboard section.
+- [x] Make each child's dashboard section a clickable element.
+- [x] Add basic unit tests to verify the layout and clickability of the dashboard sections.
