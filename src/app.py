@@ -60,7 +60,7 @@ def get_device(width=240, height=320):
         height: Device height in pixels
 
     Returns:
-        Device instance (emulator or dummy)
+        Device instance (emulator, hardware, or dummy)
     """
     # Check if we should use the emulator
     if os.environ.get("LUMA_EMULATOR") == "1":
@@ -81,9 +81,19 @@ def get_device(width=240, height=320):
             from luma.core.device import dummy
             return dummy(width=width, height=height)
     else:
-        # Use dummy device by default
-        from luma.core.device import dummy
-        return dummy(width=width, height=height)
+        # Try to initialize actual hardware device (for RaspberryPi)
+        try:
+            # Uncomment and configure based on your e-paper display model:
+            # from waveshare_epd import epd2in13_V4  # For 2.13" e-paper
+            # device = epd2in13_V4.EPD()
+            # device.init()
+            # device.clear()
+            # return device
+            raise ImportError("Hardware device not configured. See comments above.")
+        except ImportError:
+            # Fallback to dummy device for development
+            from luma.core.device import dummy
+            return dummy(width=width, height=height)
 
 
 class HomeScreen:
@@ -193,6 +203,34 @@ def main():
                 emulator_device = device._device
                 if hasattr(emulator_device, '_pygame'):
                     pygame_module = emulator_device._pygame
+
+                    # Ensure display is initialized by showing it
+                    emulator_device.show()
+
+                    # Now initialize pygame and create display
+                    pygame_module.init()
+                    display = pygame_module.display.get_surface()
+
+                    if display is None:
+                        # Create display manually if not created
+                        display = pygame_module.display.set_mode(
+                            (device.width, device.height)
+                        )
+                        pygame_module.display.set_caption("Pocket Tasks - Home Screen")
+
+                    # Draw the home screen image to the pygame surface
+                    if hasattr(emulator_device, '_last_image') and emulator_device._last_image:
+                        # Convert PIL image to pygame surface and draw it
+                        pil_image = emulator_device._last_image
+                        # Create a pygame surface from the PIL image
+                        mode = pil_image.mode
+                        size = pil_image.size
+                        data = pil_image.tobytes()
+                        temp_surface = pygame_module.image.fromstring(data, size, mode)
+                        display.blit(temp_surface, (0, 0))
+
+                    pygame_module.display.flip()
+
                     clock = pygame_module.time.Clock()
                     running = True
 
@@ -212,11 +250,20 @@ def main():
                                     print(f"Selected Child {child_index + 1}")
                                     # Re-render to show selection
                                     home_screen.render()
+                                    # Update the display with the new image
+                                    if hasattr(emulator_device, '_last_image') and emulator_device._last_image:
+                                        pil_image = emulator_device._last_image
+                                        mode = pil_image.mode
+                                        size = pil_image.size
+                                        data = pil_image.tobytes()
+                                        temp_surface = pygame_module.image.fromstring(data, size, mode)
+                                        display.blit(temp_surface, (0, 0))
+                                        pygame_module.display.flip()
 
                         clock.tick(30)  # 30 FPS
         except Exception as e:
-            # Silently ignore pygame errors in headless mode
-            pass
+            # If emulator display fails, just exit gracefully
+            print(f"Emulator display error: {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":
