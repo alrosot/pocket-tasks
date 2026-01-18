@@ -1,19 +1,13 @@
-## RENAMED Requirements
+## MODIFIED Requirements
 
 ### Requirement: home-screen-placeholders
 
-This requirement has been renamed to `home-screen-kid-sections`.
-
-## MODIFIED Requirements
-
-### Requirement: home-screen-kid-sections
-
-Each section of the home screen MUST display a dashboard for each registered child.
+Each section of the home screen MUST display a placeholder for a child's dashboard, including the child's icon.
 
 #### Scenario: Home Screen Display
 
 - Given the home screen is displayed.
-- Then each of the two sections MUST contain a UI element representing a child's dashboard.
+- Then each of the two sections MUST contain a UI element representing a child's dashboard with an associated icon.
 
 ## ADDED Requirements
 
