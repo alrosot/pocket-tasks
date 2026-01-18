@@ -182,8 +182,8 @@ class HomeScreen:
 
 def main():
     """Main entry point for the application."""
-    # Initialize device
-    device = get_device(width=240, height=320)
+    # Initialize device in landscape mode
+    device = get_device(width=320, height=240)
 
     # Create home screen
     home_screen = HomeScreen(device)

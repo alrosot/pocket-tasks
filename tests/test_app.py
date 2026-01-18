@@ -14,10 +14,10 @@ class TestHomeScreen:
 
     @pytest.fixture
     def mock_device(self):
-        """Create a mock device for testing."""
+        """Create a mock device for testing (landscape mode)."""
         device = Mock()
-        device.width = 240
-        device.height = 320
+        device.width = 320
+        device.height = 240
         return device
 
     @pytest.fixture
@@ -61,7 +61,7 @@ class TestHomeScreen:
         """Test that the layout divides the screen into two equal halves."""
         width = home_screen.device.width
         mid_x = width // 2
-        assert mid_x == 120
+        assert mid_x == 160
 
     def test_draw_child_section_draws_border(self, home_screen):
         """Test that _draw_child_section draws a border."""
