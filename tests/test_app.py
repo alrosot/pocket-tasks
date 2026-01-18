@@ -27,7 +27,9 @@ class TestHomeScreen:
 
     def test_home_screen_initialization(self, home_screen):
         """Test that HomeScreen initializes correctly."""
-        assert home_screen.children == ["Child 1", "Child 2"]
+        assert len(home_screen.children) == 2
+        assert home_screen.children[0]["name"] == "Miggy"
+        assert home_screen.children[1]["name"] == "Raffy"
         assert home_screen.selected_child is None
 
     def test_home_screen_render_creates_canvas(self, home_screen, mock_device):
@@ -66,11 +68,13 @@ class TestHomeScreen:
     def test_draw_child_section_draws_border(self, home_screen):
         """Test that _draw_child_section draws a border."""
         draw = Mock()
-        home_screen._draw_child_section(draw, 0, 0, 120, 320, "Child 1", 0)
+        child_data = {"name": "Child 1", "icon_path": "assets/images/child1.png"}
+        home_screen._draw_child_section(draw, 0, 0, 120, 320, child_data, 0)
         draw.rectangle.assert_called_once()
 
     def test_draw_child_section_draws_text(self, home_screen):
         """Test that _draw_child_section draws text."""
         draw = Mock()
-        home_screen._draw_child_section(draw, 0, 0, 120, 320, "Child 1", 0)
-        assert draw.text.call_count == 2
+        child_data = {"name": "Child 1", "icon_path": "assets/images/child1.png"}
+        home_screen._draw_child_section(draw, 0, 0, 120, 320, child_data, 0)
+        assert draw.text.call_count >= 1

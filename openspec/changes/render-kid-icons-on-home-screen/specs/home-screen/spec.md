@@ -1,3 +1,9 @@
+## RENAMED Requirements
+
+### Requirement: home-screen-placeholders
+
+This requirement has been renamed to `home-screen-kid-sections`.
+
 ## MODIFIED Requirements
 
 ### Requirement: home-screen-kid-sections

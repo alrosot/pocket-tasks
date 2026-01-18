@@ -4,6 +4,7 @@ Pocket Tasks - A task management application for e-paper displays.
 
 import os
 import sys
+import yaml
 from PIL import Image, ImageDraw
 from luma.core.interface.serial import noop
 from luma.core.render import canvas
@@ -41,15 +42,61 @@ class EmulatorDeviceWrapper:
     def __init__(self, device):
         """Initialize wrapper with emulator device."""
         self._device = device
+        self._last_image = None
 
     def display(self, image):
         """Display image (implements display method for canvas compatibility)."""
+        self._last_image = image
         self._device.data(image.tobytes())
         self._device.show()
 
     def __getattr__(self, name):
         """Delegate all other attributes to the wrapped device."""
         return getattr(self._device, name)
+
+
+def load_kids_config(config_path=None):
+    """Load kids configuration from YAML file.
+
+    Args:
+        config_path: Path to the kids YAML configuration file. If None, uses default relative to project root.
+
+    Returns:
+        List of dictionaries containing kid name and icon path
+    """
+    if config_path is None:
+        # Get the project root directory (parent of the src directory)
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        config_path = os.path.join(project_root, "config", "kids.yaml")
+
+    try:
+        with open(config_path, 'r') as file:
+            config = yaml.safe_load(file)
+            kids = config.get('kids', [])
+            # Transform 'icon' key to 'icon_path' for consistency with existing code
+            # Also resolve icon paths relative to project root
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            return [
+                {
+                    "name": kid["name"],
+                    "icon_path": os.path.join(project_root, kid["icon"])
+                }
+                for kid in kids
+            ]
+    except FileNotFoundError:
+        print(f"Warning: Configuration file not found at {config_path}, using defaults")
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        return [
+            {"name": "Child 1", "icon_path": os.path.join(project_root, "assets/images/child1.png")},
+            {"name": "Child 2", "icon_path": os.path.join(project_root, "assets/images/child2.png")},
+        ]
+    except Exception as e:
+        print(f"Warning: Error loading configuration: {e}, using defaults")
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        return [
+            {"name": "Child 1", "icon_path": os.path.join(project_root, "assets/images/child1.png")},
+            {"name": "Child 2", "icon_path": os.path.join(project_root, "assets/images/child2.png")},
+        ]
 
 
 def get_device(width=240, height=320):
@@ -102,7 +149,7 @@ class HomeScreen:
     def __init__(self, device):
         """Initialize the home screen with a device."""
         self.device = device
-        self.children = ["Child 1", "Child 2"]
+        self.children = load_kids_config()
         self.selected_child = None
 
     def render(self):
@@ -111,6 +158,9 @@ class HomeScreen:
             width = self.device.width
             height = self.device.height
             mid_x = width // 2
+
+            # Fill background with white (e-paper displays need white background)
+            draw.rectangle([0, 0, width - 1, height - 1], fill="white")
 
             # Draw vertical divider
             draw.line([(mid_x, 0), (mid_x, height)], fill="black", width=2)
@@ -125,7 +175,7 @@ class HomeScreen:
                 draw, mid_x, 0, width, height, self.children[1], 1
             )
 
-    def _draw_child_section(self, draw, x1, y1, x2, y2, name, index):
+    def _draw_child_section(self, draw, x1, y1, x2, y2, child_data, index):
         """Draw a child's dashboard section.
 
         Args:
@@ -134,28 +184,32 @@ class HomeScreen:
             y1: Top y coordinate
             x2: Right x coordinate
             y2: Bottom y coordinate
-            name: Child's name
+            child_data: Dictionary containing child's name and icon_path
             index: Child index (0 or 1)
         """
         # Draw border around section
         border_width = 2
         draw.rectangle([x1, y1, x2 - 1, y2 - 1], outline="black", width=border_width)
 
-        # Draw child name in the center
-        text_y = (y2 - y1) // 2 - 10
-        text_x = (x2 - x1) // 2
-        draw.text(
-            (x1 + text_x, y1 + text_y),
-            name,
-            fill="black",
-            anchor="mm",
-        )
+        # Load and draw child icon
+        icon_path = child_data["icon_path"]
+        try:
+            icon = Image.open(icon_path).convert("1")  # Convert to 1-bit for e-paper
+            icon = icon.resize((60, 60))  # Resize icon
+            icon_x = x1 + (x2 - x1 - icon.width) // 2
+            icon_y = y1 + 20
+            draw.bitmap((icon_x, icon_y), icon, fill="black")
+        except FileNotFoundError:
+            print(f"Warning: Icon not found for {child_data['name']} at {icon_path}", file=sys.stderr)
+        except Exception as e:
+            print(f"Warning: Failed to load icon for {child_data['name']} at {icon_path}: {e}", file=sys.stderr)
 
-        # Draw placeholder text
-        placeholder_y = text_y + 30
+        # Draw child name below icon
+        text_y = y1 + 20 + 60 + 10  # Below icon, with some padding
+        text_x = x1 + (x2 - x1) // 2
         draw.text(
-            (x1 + text_x, y1 + placeholder_y),
-            "Click to view details",
+            (text_x, text_y),
+            child_data["name"],
             fill="black",
             anchor="mm",
         )
@@ -197,7 +251,7 @@ def main():
     if os.environ.get("LUMA_EMULATOR") == "1":
         try:
             import pygame
-            # Check if pygame display is available
+            # Check if we have a wrapper device
             if hasattr(device, '_device'):
                 # We're using the wrapper, get the actual emulator
                 emulator_device = device._device
@@ -219,9 +273,12 @@ def main():
                         pygame_module.display.set_caption("Pocket Tasks - Home Screen")
 
                     # Draw the home screen image to the pygame surface
-                    if hasattr(emulator_device, '_last_image') and emulator_device._last_image:
+                    if hasattr(device, '_last_image') and device._last_image:
                         # Convert PIL image to pygame surface and draw it
-                        pil_image = emulator_device._last_image
+                        pil_image = device._last_image
+                        # Convert mode "1" (1-bit) to "RGB" for pygame compatibility
+                        if pil_image.mode == "1":
+                            pil_image = pil_image.convert("RGB")
                         # Create a pygame surface from the PIL image
                         mode = pil_image.mode
                         size = pil_image.size
@@ -251,8 +308,11 @@ def main():
                                     # Re-render to show selection
                                     home_screen.render()
                                     # Update the display with the new image
-                                    if hasattr(emulator_device, '_last_image') and emulator_device._last_image:
-                                        pil_image = emulator_device._last_image
+                                    if hasattr(device, '_last_image') and device._last_image:
+                                        pil_image = device._last_image
+                                        # Convert mode "1" (1-bit) to "RGB" for pygame compatibility
+                                        if pil_image.mode == "1":
+                                            pil_image = pil_image.convert("RGB")
                                         mode = pil_image.mode
                                         size = pil_image.size
                                         data = pil_image.tobytes()
