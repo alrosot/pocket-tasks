@@ -304,7 +304,8 @@ def main():
                                 # Scale coordinates if needed
                                 child_index = home_screen.handle_touch(x, y)
                                 if child_index is not None:
-                                    print(f"Selected Child {child_index + 1}")
+                                    child_name = home_screen.children[child_index]['name']
+                                    print(f"Selected {child_name}")
                                     # Re-render to show selection
                                     home_screen.render()
                                     # Update the display with the new image
